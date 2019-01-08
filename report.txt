@@ -1,0 +1,194 @@
+Project 4 Report - Marcel Burgunder - 204796886 - CS32 with Smallberg - Spring 2018
+
+///////////////////////////////////////////////////
+// Description of alogrithms and data structures //
+///////////////////////////////////////////////////
+
+The pimpl of the dictionary class, points to an implementation of the dictionary class named "DictionaryImpl", which is designed to store
+a large number of words in a data structure, to enable efficient access to all anagrams of an inputted word. They are stored in a vector
+of Nodes, which are all sorted by "primeproduct". Every Node contains in it a list of strings, that represents words that are anagrams of each other, as well as an integer m_p which is the prime product of the letters of the anagrams.
+
+To explain further, I created an array of integers PRIMES, that represent the first 26 prime numbers. All integer codes from characters that are
+lowercase and letters, should be consecutive, as in every character that is a lower case letter, equals an integer that can be represented
+as C+U, where C represents a constant and U is any value from 0 - 25. Thus for any lowercase letter k, the value of k % 26, will be a unique 
+number from 0 - 25, henceforth using this algorithm we can convert any lowercase letter to a number from 0 - 25, thus every lowercase letter
+can be converted to a unique prime number, by using its integer 0 - 25 as an index of accessing the array of the first 26 prime numbers. Thus
+every letter has a prime number associated with it, through this conversion algorithm.
+
+Since the product of primes is always distinct to a product of a different set of primes, we know that any set of letters and thus also all of its
+anagrams will have a unique prime product. That is what the function "primeproduct" is for; it return the prime product of a word/letters. Using
+this concept of prime products it has allowed to easily sort all words by their prime product, and group together all words that are anagrams
+of each other in a list of strings inside a Node that also holds its respective prime product.
+
+Because this computation of large numbers can often times can lead to an overflow, I've decided to use a type integer, that is in this
+case an unsigned long long (and it can easily be changed to other types as well), to avoid overflow.
+
+It is important to note that every Node, has a constructor that takes in two arguments, its prime product, and a word, to be inserted into the 
+list (no Node will have an empty list of strings, as that would make it useless memory). Furthermore, it has accessors for its private members
+(the prime product (prime()) and the list of strings (words()). And finally, it also has a function to add another word to its list of strings.
+
+The vector of Nodes is sorted by prime product, making it very easy to find and access the Node corresponding to the inputted letters.
+
+With this data structure in mind, the DictionaryImpl class has two relevant functions to discuss, the insertion and lookup function. When these
+functions inspect the Nodes prime products, they basically always go to the middle of an uninspected range, check on what side of this range the prime product belongs in order (either past or before the midway point), and recursively inspects half point on that side. Thus, since we're always eliminating half the vector to inspect, our algorithm runs on logarithmic time, and is thus very efficient.
+
+1) Insertion
+
+When a word is inserted into the vector of Nodes holding all words from the imported dictionary, it first cleans the word (removes non-characters
+and makes everything lowercase), then creates a Node with the appropriate parameters, checks whether the vector is empty (if it is, it just
+pushes it in and returns), and then it calls a recursive function loginsertion, which will insert the Node / word in the appropriate place
+in the vector, so that it remains sorted by prime product.
+
+The loginsertion function works by taking in a constant reference the Node created, the only word in the Node, a position in the vector to inspect(which is initially half way from beginning to end) and a parameter representing the depth of the recursion (begins at 4 and is doubled everytime we go deeper).
+
+At each recursive call, multiple things are checked (and also in a good functional order)
+
+a) Is the prime product equal to the Node's prime product we're inspecting -> if it is add the word to the bucket
+b) Does the prime product lie in between the Node and the Node before it in order its prime products -> if it is, then insert the bucket in between the two
+c) Is the position we're inspecting outside the range of the vector -> if it is, then insert the Node at the beginning or end respectively
+
+If none of the above hold true then we must check whether the prime is larger or smaller than the Node we're inspecting, and then recursively
+call the function to check the position (range/depth) away from where we checked initially, in the respective direction depending on the inequality.
+ 
+
+2) Lookup
+
+In a similar fashion to the insertion algorithm, the inputted letters are first cleaned, and then a pointer to the appropriate Node is returned
+by the recursive function findnode (described below). If that function returns a null pointer, it implies no bucket with the corresponding prime
+product was found, and thus the inputted letters have no anagrams, and hence the function returns. Else in a loop, we iterate through the list
+of strings of the bucket that findbucket returned, and callback each string in it.
+
+The findbucket function works by taking in the prime product of the cleaned inputted letters, a position in the vector to inspect (which is initially
+half way from beginning to end) and a parameter representing the depth of the recursion (begins at 4 and is doubled every time we go deeper).
+
+At each recursive call, multiple things are checked (and also in a good functional order)
+
+a) Does the prime product equal the Node's prime product we're inspecting -> if it does, then return that Node
+b) Is the prime product smaller than the one we're inspecting, and the Node we're inspecting is at the beginning -> if it is, then return a null pointer
+c) Is the prime product larger than the one we're inspecting, and the Node we're inspecting is at the end -> if it is, then return a null pointer
+
+If none of the above hold true then we must check whether the prime is larger or smaller than the Node we're inspecting, and then recursively
+call the function to check the position (range/depth) away in where we initially checked, in the respective direction.
+
+//////////////////////
+///// Pseudocode /////
+//////////////////////
+
+constant array of integers representing the first 26 prime numbers;
+
+class Node
+
+	constructor that takes in to parameters, the prime product and the first word to be inserted into the list
+
+	contains private prime product integer and list of words, including accessors to them
+
+	contains a function to add a word into the list of words
+
+class DictionaryImpl
+
+	Empty constructor & destructor
+
+	contains private vector of Nodes (this is the library in which all the words are contained
+
+	Has an insertion function that uses a recursive loginsertion and a lookup function that uses a recursive findnode function
+
+Insert
+
+	clean the word and initialise a Node with that word and its primeproduct;
+
+	if the library is empty
+		push the Node into the library and return;
+
+	call loginsertion for this Node, and its word inspecting the position half way through the vector;
+
+	return;
+
+Loginsertion (recursive)
+
+	If the position we're inspecting is larger than the size of the vector -> push the Node to the back of the vector & return;
+
+	If the Node's prime is equal to the Node's prime we're inspecting -> add the inserted word, to the Node we're inspecting & return;
+
+	If the position we're inspecting equals 0 -> insert the node either in position [0] or [1] depending on whether the prime product at
+	position 0 is greater or smaller than that of the Node we're inserting.
+
+	If the Node's prime lies in-between the Node's prime we're inspecting, and the Node before its prime we are inspecting -> then insert
+	the Node in-between these two Nodes & return;
+	
+	Initialise an integer depending on depth of recursion, that computes the half way distance of what range to inspect (with a minimum of 1)
+	
+	If the Node's prime is larger than the Node's prime we're inspecting -> call loginsertion on the same Node, and word, but adding the
+	half way point to the current position, and doubling the depth & return;
+
+	Else there's only one possibility (the Node's prime is smaller than the Node's prime we're inspecting) -> in which case we call loginsertion on 	the same Node, and word, but subtracting the half way point to the current position, and doubling the depth & return;
+	
+Lookup
+
+	clean the letters;
+
+	initialise a node pointer to findnode's return pointer for the parameters of the prime product of the letters and the position half way
+	through the vector;
+
+	If this pointer is a nullpointer, then return (do nothing, because no Nodes/anagrams were found);
+
+	Run a for loop using an iterator through the list of the Node that the pointer points to, calling callback for each string in the list;
+
+	return;
+	
+Findnode (recursive)
+
+	If the Node's prime matches the one we're comparing it to -> return a pointer to that node;
+
+	Initialise an integer depending on depth of recursion, that computes the half way distance of what range to inspect (with a minimum of 1);
+
+	If the Node's prime is less than the one we're inspecting
+
+		If we're inspecting the first node
+			return a null pointer;
+
+		If the Node's prime is also larger than the Node preceding the one we're inspecting
+			return a null pointer;
+
+		Else simply return the recursive call for findnode, using the same prime to search for, but subtracting the half way distance from the 			initial position we were inspecting, and doubling the depth constant;
+
+	If the Node we're inspecting is at the end of the vector
+		return a null pointer;
+
+	Else there is only one option (the prime we're inspecting is larger than that of the node we're inspecting)
+	-> in which case return the recursive call for findnode, using the same prime to search for, but subtracting the half way distance 			from the initial position we were inspecting, and doubling the depth constant;
+		
+Primeproduct (takes in the string we're computing the prime product for)
+
+	initialise an integer called "product" to the value 1;
+	
+	loop through the all characters of the string
+		for every letter, take its modulus of 26 (remainder if divided by 26) and access the array of primes using that computed index and
+		multiply the integer "product" by the value extracted from the array of primes;
+
+	return that product;
+
+Clean (same as the removeNonLetters function given in angrams.zip)
+	
+	initialises one iterator to the beginning of the string;
+
+	using another string iterator, iterate through all characters of the string
+		if it is alphabetical
+			make it lowercase, and add it to where the first iterator points to and increment the first iterator;
+
+	finally erase everything from where the first iterator points to (which is at the end of all concatinated lower case alphabetical characters),
+	until the end of the string;
+
+//////////////////////////////////////////////////
+///// Notable Bugs, Problems, Inefficiencies /////
+//////////////////////////////////////////////////
+
+A. It seems to me that the program performs correctly and efficiently without any bugs.
+
+B. Initially I wanted to construct my data structure using prime product as a hash-table/hash-map, however I ran into a whole bunch of problems and collisions when attempting to construct my hash function, that I decided it would be almost just as efficient to have a vector of Nodes, and constantly dividing the range by 2 in order to find where the Node/word belonged.
+
+C. The main bugs I had were related to the division of the range and ensuring that I never accessed a vector subscript outside the range of the vector.
+
+D. In my debugging I discovered scenarios that I didn't consider beforehand, such as if the prime product we're searching for is less than the first
+Node's prime product, or more than the last Node's prime product, or that it lies in-between two consecutive Nodes.
+
+
